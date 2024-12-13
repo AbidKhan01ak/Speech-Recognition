@@ -1,4 +1,3 @@
-// JavaScript code with save functionality
 window.SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -9,44 +8,59 @@ let p = document.createElement("p");
 const words = document.querySelector(".words");
 words.appendChild(p);
 
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioContext;
 let audioStream;
 
-//Function to captue audio from the device
-async function captureDeviceAudio(){
-  try{
-    audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
-
-    const source = audioContext.createMediaStreamSource(audioStream);
-    const analyzer = audioContext.createAnalyser();
-    source.connect(analyzer);
-
-    //create a script processor node to process audio
-    const processor = audioContext.createScriptProcessor(4096,1,1);
-    source.connect(processor);
-    processor.connect(audioContext.destination);
-
-    processor.onaudioprocess = (event) => {
-      const inputBuffer = event.inputBuffer.getChannelData(0);
-
-      const audioBlob = new Blob([inputBuffer], {type: "audio/wav"});
-      const reader = new FileReader();
-      reader.readAsArrayBuffer(audioBlob);
-      reader.onloadend = () => {
-        const audioArrayBuffer = reader.result;
-      };
-
-    };
-  }catch(err) {
-    console.error("Error capturing device audio:", err);
+// Function to start the audio context after user interaction
+function startAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
 
-} 
-captureDeviceAudio();
+  captureDeviceAudio();
+}
+
+// Function to capture audio from the device
+async function captureDeviceAudio() {
+  try {
+    // Get audio stream from the system or microphone
+    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioContext.createMediaStreamSource(audioStream);
+
+    // Use an AudioWorklet for processing the audio
+    await audioContext.audioWorklet.addModule("audio-processor.js");
+    const audioWorkletNode = new AudioWorkletNode(audioContext, "audio-processor");
+
+    source.connect(audioWorkletNode);
+    audioWorkletNode.connect(audioContext.destination);
+
+    // Handle audio processing (optional: send processed data to SpeechRecognition)
+    audioWorkletNode.port.onmessage = (event) => {
+      const audioData = event.data;
+      console.log("Audio data processed:", audioData);
+    };
+  } catch (err) {
+    console.error("Error capturing device audio:", err);
+  }
+}
+
+// Event listener for user gesture
+document.addEventListener("click", startAudioContext);
+
+// SpeechRecognition event listeners
+recognition.addEventListener("result", (e) => {
+  const transcript = Array.from(e.results)
+    .map((result) => result[0])
+    .map((result) => result.transcript)
+    .join("");
+  p.textContent = transcript;
+  if (e.results[0].isFinal) {
+    p = document.createElement("p");
+    words.appendChild(p);
+  }
+});
 
 recognition.addEventListener("end", recognition.start);
-
-recognition.start();
 
 // Add event listener for saving content as text file
 document.addEventListener("keydown", function (event) {
