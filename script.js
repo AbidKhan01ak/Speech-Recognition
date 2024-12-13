@@ -8,44 +8,6 @@ let p = document.createElement("p");
 const words = document.querySelector(".words");
 words.appendChild(p);
 
-let audioContext;
-let audioStream;
-
-// Function to start the audio context after user interaction
-function startAudioContext() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
-
-  captureDeviceAudio();
-}
-
-// Function to capture audio from the device
-async function captureDeviceAudio() {
-  try {
-    // Get audio stream from the system or microphone
-    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const source = audioContext.createMediaStreamSource(audioStream);
-
-    // Use an AudioWorklet for processing the audio
-    await audioContext.audioWorklet.addModule("audio-processor.js");
-    const audioWorkletNode = new AudioWorkletNode(audioContext, "audio-processor");
-
-    source.connect(audioWorkletNode);
-    audioWorkletNode.connect(audioContext.destination);
-
-    // Handle audio processing (optional: send processed data to SpeechRecognition)
-    audioWorkletNode.port.onmessage = (event) => {
-      const audioData = event.data;
-      console.log("Audio data processed:", audioData);
-    };
-  } catch (err) {
-    console.error("Error capturing device audio:", err);
-  }
-}
-
-// Event listener for user gesture
-document.addEventListener("click", startAudioContext);
 
 // SpeechRecognition event listeners
 recognition.addEventListener("result", (e) => {
