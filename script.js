@@ -1,4 +1,6 @@
-window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+// JavaScript code with save functionality
+window.SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 
 const recognition = new SpeechRecognition();
 recognition.interimResults = true;
@@ -23,23 +25,32 @@ recognition.addEventListener("end", recognition.start);
 
 recognition.start();
 
-const saveButton = document.querySelector("button");
-saveButton.addEventListener("click", saveAsTextFile);
-
+// Add event listener for saving content as text file
+document.addEventListener("keydown", function (event) {
+  // Check if Ctrl + S is pressed
+  if (event.ctrlKey && event.key === "s") {
+    saveAsTextFile();
+    event.preventDefault(); // Prevent default browser behavior
+  }
+});
 
 function saveAsTextFile() {
   const textToSave = document.querySelector(".words").innerText;
-  const fileName = `SpeechRecognizer-${getTimeStamp()}.txt`; 
+  const fileName = `SpeechRecognizer-${getTimeStamp()}.txt`; // Filename with prefix and timestamp
 
+  // Create a blob with the text content
   const blob = new Blob([textToSave], { type: "text/plain" });
 
+  // Create a temporary anchor element to trigger the download
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = fileName;
 
+  // Append the anchor element to the body and trigger the download
   document.body.appendChild(a);
   a.click();
 
+  // Clean up
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 }
@@ -67,4 +78,5 @@ function updateClock() {
   document.querySelector(".clock").textContent = timeString;
 }
 
+// Update clock every second
 setInterval(updateClock, 1000);
