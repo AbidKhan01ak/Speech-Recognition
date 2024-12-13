@@ -69,6 +69,8 @@ body {
 }
 
 header {
+    display: flex;
+    align-items: center;
     position: absolute;
     font-family: 'Roboto', sans-serif;
     top: 0;
