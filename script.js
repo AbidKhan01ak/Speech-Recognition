@@ -9,6 +9,40 @@ let p = document.createElement("p");
 const words = document.querySelector(".words");
 words.appendChild(p);
 
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioStream;
+
+//Function to captue audio from the device
+async function captureDeviceAudio(){
+  try{
+    audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
+
+    const source = audioContext.createMediaStreamSource(audioStream);
+    const analyzer = audioContext.createAnalyser();
+    source.connect(analyzer);
+
+    //create a script processor node to process audio
+    const processor = audioContext.createScriptProcessor(4096,1,1);
+    source.connect(processor);
+    processor.connect(audioContext.destination);
+
+    processor.onaudioprocess = (event) => {
+      const inputBuffer = event.inputBuffer.getChannelData(0);
+
+      const audioBlob = new Blob([inputBuffer], {type: "audio/wav"});
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(audioBlob);
+      reader.onloadend = () => {
+        const audioArrayBuffer = reader.result;
+      };
+
+    };
+  }catch(err) {
+    console.error("Error capturing device audio:", err);
+  }
+
+} 
+captureDeviceAudio();
 recognition.addEventListener("result", (e) => {
   const transcript = Array.from(e.results)
     .map((result) => result[0])
