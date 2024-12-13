@@ -47,6 +47,44 @@ async function captureDeviceAudio() {
 // Event listener for user gesture
 document.addEventListener("click", startAudioContext);
 
+
+async function setupAudioProcessing() {
+  try {
+    // Create an audio context
+    const audioContext = new AudioContext();
+
+    // Add the AudioWorklet module
+    await audioContext.audioWorklet.addModule("./audio_processor.js");
+
+    // Create a worklet node using the "audio-processor"
+    const audioProcessorNode = new AudioWorkletNode(audioContext, "audio-processor");
+
+    // Connect the node to the destination (speakers)
+    audioProcessorNode.connect(audioContext.destination);
+
+    // Log audio data received from the processor
+    audioProcessorNode.port.onmessage = (event) => {
+      console.log("Audio data received:", event.data);
+    };
+
+    // Get user media (microphone input)
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioContext.createMediaStreamSource(stream);
+
+    // Connect the microphone input to the processor
+    source.connect(audioProcessorNode);
+
+    console.log("Audio processing is set up.");
+  } catch (err) {
+    console.error("Error setting up audio processing:", err);
+  }
+}
+
+// Start the audio processing after a user gesture
+document.querySelector("button").addEventListener("click", () => {
+  setupAudioProcessing();
+});
+
 // SpeechRecognition event listeners
 recognition.addEventListener("result", (e) => {
   const transcript = Array.from(e.results)
