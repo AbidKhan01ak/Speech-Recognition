@@ -2,6 +2,12 @@
 
 This is a simple web application for speech recognition using JavaScript.
 
+## Demo
+
+Check out the live demo of the Hex Color Generator:
+[Live Demo](https://speech-recognizer-ak.netlify.app) 
+
+
 ## Features
 
 - Transcribes speech input in real-time.
